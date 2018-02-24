@@ -51,7 +51,7 @@ def AddExtraLayers(net, use_batchnorm=True):
 
 rolling_time = 4
 branch_num = 4
-model_name = "kitti_car"
+model_name = "kitti_car_exp2_text_fb"
 # Set true if you want to start training right after generating all files.
 run_soon = True
 # Set true if you want to load from most recently saved snapshot.
@@ -120,7 +120,7 @@ gpulist = gpus.split(",")
 num_gpus = len(gpulist)
 
 # Divide the mini-batch to different GPUs.
-batch_size = 4 
+batch_size = 4
 accum_batch_size = 8
 iter_size = accum_batch_size / batch_size
 solver_mode = P.Solver.CPU
@@ -284,7 +284,7 @@ loss_param = {
 
 # parameters for generating priors.
 # minimum dimension of input image
-min_dim = min(resize_width,resize_height) 
+min_dim = min(resize_width,resize_height)
 
 mbox_source_layers = ['conv4_3r', 'fc7r', 'conv6_2', 'conv7_2', 'conv8_2']
 # in percent %
@@ -321,12 +321,12 @@ solver_param = {
     'base_lr': learning_rate,
     'weight_decay': 0.0005,
     'lr_policy': "step",
-    'stepsize': 30000,
+    'stepsize': 2000,           # NOTE: change to 30000 when training on full data
     'gamma': 0.1,
     'momentum': 0.9,
     'iter_size': iter_size,
-    'max_iter': 60000,
-    'snapshot': 5000,
+    'max_iter': 4000,           # NOTE: change to 60000 when training on full data
+    'snapshot': 1000,           # NOTE: change to 5000 when training on full data
     'display': 10,
     'average_loss': 10,
     'type': "SGD",
@@ -386,7 +386,8 @@ make_if_not_exist(snapshot_dir)
 
 ##########################Create train net.########################################
 net = caffe.NetSpec()
-net.data, net.label = CreateAnnotatedDataLayer(train_data, batch_size=batch_size_per_device,
+# test_data
+net.data, net.label = CreateAnnotatedDataLayer(test_data, batch_size=batch_size_per_device,
         train=True, output_label=True, label_map_file=label_map_file,
         transform_param=train_transform_param, batch_sampler=batch_sampler)
 
@@ -417,9 +418,9 @@ for roll_idx in range(1,rolling_time+1):
             use_batchnorm=use_batchnorm, min_sizes=min_sizes, max_sizes=max_sizes,
             aspect_ratios=aspect_ratios, normalizations=normalizations2,
             num_classes=num_classes, share_location=share_location, flip=flip, clip=clip,
-            prior_variance=prior_variance, kernel_size=3, pad=1,layers_names=mbox_source_layers, 
+            prior_variance=prior_variance, kernel_size=3, pad=1,layers_names=mbox_source_layers,
             conf_postfix='%d'%(roll_idx+1), loc_postfix='%d'%(roll_idx+1),branch_num=branch_num)
-    
+
     # Create the MultiBoxLossLayer.
     name = "mbox_loss%d"%(roll_idx+1)
     mbox_layers.append(net.label)
@@ -427,7 +428,7 @@ for roll_idx in range(1,rolling_time+1):
             loss_param=loss_param, include=dict(phase=caffe_pb2.Phase.Value('TRAIN')),
             propagate_down=[True, True, False, False])
 #==============================================================================
-      
+
 with open(train_net_file, 'w') as f:
     print('name: "{}_train"'.format(model_name), file=f)
     print(net.to_proto(), file=f)
@@ -482,11 +483,11 @@ for i in range(0,len(mbox_source_layers)):
           name = "{}_mbox_priorbox{}".format(from_layer,mbox_idx)
           if max_sizes and max_sizes[i]:
               if aspect_ratio:
-                  net[name] = L.PriorBox(net[from_layer], net[data_layer], min_size=min_sizes_2x[branch_num*i + mbox_idx], 
+                  net[name] = L.PriorBox(net[from_layer], net[data_layer], min_size=min_sizes_2x[branch_num*i + mbox_idx],
                                         max_size=max_sizes_2x[branch_num*i + mbox_idx],
                                         aspect_ratio=aspect_ratio, flip=flip, clip=clip, variance=prior_variance)
               else:
-                  net[name] = L.PriorBox(net[from_layer], net[data_layer], min_size=min_sizes_2x[branch_num*i + mbox_idx], 
+                  net[name] = L.PriorBox(net[from_layer], net[data_layer], min_size=min_sizes_2x[branch_num*i + mbox_idx],
                                         max_size=max_sizes_2x[branch_num*i + mbox_idx],
                                         clip=clip, variance=prior_variance)
           else:
@@ -499,18 +500,18 @@ for i in range(0,len(mbox_source_layers)):
           priorbox_layers.append(net[name])
 name = "mbox_priorbox"
 net[name] = L.Concat(*priorbox_layers, axis=2)
-#==============================================================================        
+#==============================================================================
 for roll_idx in range(1,rolling_time+1):
     roll_layers = CreateRollingStruct(net,from_layers_basename=mbox_source_layers,num_outputs=num_outputs,odd=odd,rolling_rate=rolling_rate,
-                                        roll_idx=roll_idx,conv2=False)    
-    
-#==============================================================================  
+                                        roll_idx=roll_idx,conv2=False)
+
+#==============================================================================
 mbox_layers = CreateMultiBoxHead_share_2x(net, data_layer='data', from_layers=roll_layers,
             use_batchnorm=use_batchnorm, min_sizes=min_sizes, max_sizes=max_sizes,
             aspect_ratios=aspect_ratios, normalizations=normalizations2,
             num_classes=num_classes, share_location=share_location, flip=flip, clip=clip,
-            prior_variance=prior_variance, kernel_size=3, pad=1,layers_names=mbox_source_layers, conf_postfix='%d'%(rolling_time+1), 
-            loc_postfix='%d'%(rolling_time+1),branch_num = branch_num) 
+            prior_variance=prior_variance, kernel_size=3, pad=1,layers_names=mbox_source_layers, conf_postfix='%d'%(rolling_time+1),
+            loc_postfix='%d'%(rolling_time+1),branch_num = branch_num)
 conf_name = "mbox_conf%d"%(rolling_time+1)
 if multibox_loss_param["conf_loss_type"] == P.MultiBoxLoss.SOFTMAX:
   reshape_name = "{}_reshape".format(conf_name)
@@ -585,11 +586,11 @@ for i in range(0,len(mbox_source_layers)):
           name = "{}_mbox_priorbox{}".format(from_layer,mbox_idx)
           if max_sizes and max_sizes[i]:
               if aspect_ratio:
-                  net[name] = L.PriorBox(net[from_layer], net[data_layer], min_size=min_sizes_2x[branch_num*i + mbox_idx], 
+                  net[name] = L.PriorBox(net[from_layer], net[data_layer], min_size=min_sizes_2x[branch_num*i + mbox_idx],
                                         max_size=max_sizes_2x[branch_num*i + mbox_idx],
                                         aspect_ratio=aspect_ratio, flip=flip, clip=clip, variance=prior_variance)
               else:
-                  net[name] = L.PriorBox(net[from_layer], net[data_layer], min_size=min_sizes_2x[branch_num*i + mbox_idx], 
+                  net[name] = L.PriorBox(net[from_layer], net[data_layer], min_size=min_sizes_2x[branch_num*i + mbox_idx],
                                         max_size=max_sizes_2x[branch_num*i + mbox_idx],
                                         clip=clip, variance=prior_variance)
           else:
@@ -603,16 +604,16 @@ for i in range(0,len(mbox_source_layers)):
 name = "mbox_priorbox"
 net[name] = L.Concat(*priorbox_layers, axis=2)
 rolling_time = 2
-#==============================================================================        
+#==============================================================================
 for roll_idx in range(1,rolling_time+1):
     roll_layers = CreateRollingStruct(net,from_layers_basename=mbox_source_layers,num_outputs=num_outputs,odd=odd,rolling_rate=rolling_rate,
-                                roll_idx=roll_idx,conv2=False)       
+                                roll_idx=roll_idx,conv2=False)
     mbox_layers = CreateMultiBoxHead_share_2x(net, data_layer='data', from_layers=roll_layers,
             use_batchnorm=use_batchnorm, min_sizes=min_sizes, max_sizes=max_sizes,
             aspect_ratios=aspect_ratios, normalizations=normalizations2,
             num_classes=num_classes, share_location=share_location, flip=flip, clip=clip,
-            prior_variance=prior_variance, kernel_size=3, pad=1,layers_names=mbox_source_layers, conf_postfix='%d'%(roll_idx+1), 
-            loc_postfix='%d'%(roll_idx+1),branch_num=branch_num)   
+            prior_variance=prior_variance, kernel_size=3, pad=1,layers_names=mbox_source_layers, conf_postfix='%d'%(roll_idx+1),
+            loc_postfix='%d'%(roll_idx+1),branch_num=branch_num)
     conf_name = "mbox_conf%d"%(roll_idx+1)
     if multibox_loss_param["conf_loss_type"] == P.MultiBoxLoss.SOFTMAX:
       reshape_name = "{}_reshape".format(conf_name)
@@ -626,7 +627,7 @@ for roll_idx in range(1,rolling_time+1):
       sigmoid_name = "{}_sigmoid".format(conf_name)
       net[sigmoid_name] = L.Sigmoid(net[conf_name])
       mbox_layers[1] = net[sigmoid_name]
-    
+
     net['detection_out%d'%(roll_idx+1)] = L.DetectionOutput(*mbox_layers,
         detection_output_param=det_out_param,
         include=dict(phase=caffe_pb2.Phase.Value('TEST')))
@@ -636,7 +637,7 @@ deploy_net = net
 with open(deploy_net_file, 'w') as f:
     net_param = deploy_net.to_proto()
     # Remove the first (AnnotatedData) and last (DetectionEvaluate) layer from test net.
-    del net_param.layer[0]    
+    del net_param.layer[0]
     net_param.name = '{}_deploy'.format(model_name)
     net_param.input.extend(['data'])
     net_param.input_shape.extend([
@@ -696,4 +697,3 @@ with open(job_file, 'w') as f:
 os.chmod(job_file, stat.S_IRWXU)
 if run_soon:
   subprocess.call(job_file, shell=True)
-
