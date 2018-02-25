@@ -64,6 +64,8 @@ remove_old_models = False
 train_data = "data/KITTI-car/lmdb/KITTI-car_training_lmdb"
 # The database file for testing data. Created by data/KITTI/create_data.sh
 test_data = "data/KITTI-car/lmdb/KITTI-car_testing_lmdb"
+# The database file for validation data. Created by data/KITTI/create_data.sh
+val_data = "data/KITTI-car/lmdb/KITTI-car_validation_lmdb"
 # Specify the batch sampler.
 
 resize_width = 2560
@@ -321,12 +323,12 @@ solver_param = {
     'base_lr': learning_rate,
     'weight_decay': 0.0005,
     'lr_policy': "step",
-    'stepsize': 30000,           # NOTE: change to 30000 when training on full data
+    'stepsize': 2000,
     'gamma': 0.1,
     'momentum': 0.9,
     'iter_size': iter_size,
-    'max_iter': 60000,           # NOTE: change to 60000 when training on full data
-    'snapshot': 5000,           # NOTE: change to 5000 when training on full data
+    'max_iter': 4000,
+    'snapshot': 1000,
     'display': 10,
     'average_loss': 10,
     'type': "SGD",
@@ -378,6 +380,7 @@ det_eval_param = {
 # Check file.
 check_if_exist(train_data)
 check_if_exist(test_data)
+check_if_exist(val_data)
 check_if_exist(label_map_file)
 check_if_exist(pretrain_model)
 make_if_not_exist(save_dir)
@@ -386,8 +389,8 @@ make_if_not_exist(snapshot_dir)
 
 ##########################Create train net.########################################
 net = caffe.NetSpec()
-# NOTE: test_data, train_data
-net.data, net.label = CreateAnnotatedDataLayer(test_data, batch_size=batch_size_per_device,
+# NOTE: test_data, train_data, val_data
+net.data, net.label = CreateAnnotatedDataLayer(val_data, batch_size=batch_size_per_device,
         train=True, output_label=True, label_map_file=label_map_file,
         transform_param=train_transform_param, batch_sampler=batch_sampler)
 
