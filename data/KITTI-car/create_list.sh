@@ -4,7 +4,7 @@ root_dir="$HOME/data/KITTI/"   #your path to kitti dataset
 bash_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 label_dir="label_2car"                #path to labels of car
 name="image_2"
-for dataset in training testing
+for dataset in training testing validation
 do
   dst_file=$bash_dir/$dataset.txt
   if [ -f $dst_file ]
@@ -37,7 +37,7 @@ do
   fi
 
   # Shuffle trainval file.
-  if [ $dataset == "training" ]
+  if [ $dataset == "training" ] || [ $dataset == "validation" ]
   then
     rand_file=$dst_file.random
     cat $dst_file | perl -MList::Util=shuffle -e 'print shuffle(<STDIN>);' > $rand_file
