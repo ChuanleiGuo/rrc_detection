@@ -321,12 +321,12 @@ solver_param = {
     'base_lr': learning_rate,
     'weight_decay': 0.0005,
     'lr_policy': "step",
-    'stepsize': 2000,           # NOTE: change to 30000 when training on full data
+    'stepsize': 30000,           # NOTE: change to 30000 when training on full data
     'gamma': 0.1,
     'momentum': 0.9,
     'iter_size': iter_size,
-    'max_iter': 4000,           # NOTE: change to 60000 when training on full data
-    'snapshot': 1000,           # NOTE: change to 5000 when training on full data
+    'max_iter': 60000,           # NOTE: change to 60000 when training on full data
+    'snapshot': 5000,           # NOTE: change to 5000 when training on full data
     'display': 10,
     'average_loss': 10,
     'type': "SGD",
@@ -386,7 +386,7 @@ make_if_not_exist(snapshot_dir)
 
 ##########################Create train net.########################################
 net = caffe.NetSpec()
-# test_data
+# NOTE: test_data, train_data
 net.data, net.label = CreateAnnotatedDataLayer(test_data, batch_size=batch_size_per_device,
         train=True, output_label=True, label_map_file=label_map_file,
         transform_param=train_transform_param, batch_sampler=batch_sampler)
