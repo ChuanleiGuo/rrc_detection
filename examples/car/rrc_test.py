@@ -154,8 +154,8 @@ for img_idx in range(0,num_img):
     top_conf = det_results[idxs,4]
     top_label = det_results[idxs,5]
     result_file = open(save_dir+"%06d.txt"%(img_idx),'w')
-    # img = Image.open(img_dir + "%06d.png"%(img_idx))
-    # draw = ImageDraw.Draw(img)
+    img = Image.open(img_dir + "%06d.png"%(img_idx))
+    draw = ImageDraw.Draw(img)
     for i in xrange(top_conf.shape[0]):
         xmin = top_xmin[i]
         ymin = top_ymin[i]
@@ -169,11 +169,11 @@ for img_idx in range(0,num_img):
            continue
         score = top_conf[i]
         label = 'Car'
-        # if score > 0.1:
-        #     draw.line(((xmin,ymin),(xmin,ymax),(xmax,ymax),(xmax,ymin),(xmin,ymin)),fill=(0,255,0))
-        #     draw.text((xmin,ymin),'%.2f'%(score),fill=(255,255,255))
-        # elif score > 0.02:
-        #     draw.line(((xmin,ymin),(xmin,ymax),(xmax,ymax),(xmax,ymin),(xmin,ymin)),fill=(255,0,255))
-        #     draw.text((xmin,ymin),'%.2f'%(score),fill=(255,255,255))
+        if score > 0.1:
+            draw.line(((xmin,ymin),(xmin,ymax),(xmax,ymax),(xmax,ymin),(xmin,ymin)),fill=(0,255,0))
+            draw.text((xmin,ymin),'%.2f'%(score),fill=(255,255,255))
+        elif score > 0.02:
+            draw.line(((xmin,ymin),(xmin,ymax),(xmax,ymax),(xmax,ymin),(xmin,ymin)),fill=(255,0,255))
+            draw.text((xmin,ymin),'%.2f'%(score),fill=(255,255,255))
         result_file.write("%s -1 -1 -10 %.3f %.3f %.3f %.3f -1 -1 -1 -1000 -1000 -1000 -10 %.8f\n"%(label,xmin,ymin,xmax,ymax,score))
-        # img.save(save_dir+"%06d.png"%(img_idx))
+        img.save(save_dir+"%06d.png"%(img_idx))
