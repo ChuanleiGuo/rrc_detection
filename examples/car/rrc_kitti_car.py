@@ -61,7 +61,7 @@ resume_training = True
 remove_old_models = False
 
 # whether forward/backward in rolling structure
-forward = True
+forward = False
 backward = True
 
 # The database file for training data. Created by data/KITTI/create_data.sh
