@@ -1,8 +1,8 @@
 import numpy as np
 #%matplotlib inline
 import timeit
-import Image
-import ImageDraw
+from PIL import Image
+from PIL import ImageDraw
 
 # Make sure that the work directory is caffe_root
 caffe_root = './'
