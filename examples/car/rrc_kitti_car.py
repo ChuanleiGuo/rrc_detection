@@ -51,7 +51,7 @@ def AddExtraLayers(net, use_batchnorm=True):
 
 rolling_time = 4
 branch_num = 4
-model_name = "kitti_car_exp2_text_fb"
+model_name = "kitti_car_exp3_test_back"
 # Set true if you want to start training right after generating all files.
 run_soon = True
 # Set true if you want to load from most recently saved snapshot.
@@ -59,6 +59,10 @@ run_soon = True
 resume_training = True
 # If true, Remove old model files.
 remove_old_models = False
+
+# whether forward/backward in rolling structure
+forward = True
+backward = True
 
 # The database file for training data. Created by data/KITTI/create_data.sh
 train_data = "data/KITTI-car/lmdb/KITTI-car_training_lmdb"
@@ -415,7 +419,7 @@ net[name] = L.MultiBoxLoss(*mbox_layers, multibox_loss_param=multibox_loss_param
 for roll_idx in range(1,rolling_time+1):
 ##################
     roll_layers = CreateRollingStruct(net,from_layers_basename=mbox_source_layers,num_outputs=num_outputs,odd=odd,
-        rolling_rate=rolling_rate,roll_idx=roll_idx,conv2=False)
+        rolling_rate=rolling_rate,roll_idx=roll_idx,conv2=False,forward=forward,backward=backward)
 
     mbox_layers = CreateMultiBoxHead_share_2x(net, data_layer='data', from_layers=roll_layers,
             use_batchnorm=use_batchnorm, min_sizes=min_sizes, max_sizes=max_sizes,
@@ -506,7 +510,7 @@ net[name] = L.Concat(*priorbox_layers, axis=2)
 #==============================================================================
 for roll_idx in range(1,rolling_time+1):
     roll_layers = CreateRollingStruct(net,from_layers_basename=mbox_source_layers,num_outputs=num_outputs,odd=odd,rolling_rate=rolling_rate,
-                                        roll_idx=roll_idx,conv2=False)
+                                        roll_idx=roll_idx,conv2=False,forward=forward,backward=backward)
 
 #==============================================================================
 mbox_layers = CreateMultiBoxHead_share_2x(net, data_layer='data', from_layers=roll_layers,
@@ -610,7 +614,7 @@ rolling_time = 2
 #==============================================================================
 for roll_idx in range(1,rolling_time+1):
     roll_layers = CreateRollingStruct(net,from_layers_basename=mbox_source_layers,num_outputs=num_outputs,odd=odd,rolling_rate=rolling_rate,
-                                roll_idx=roll_idx,conv2=False)
+                                roll_idx=roll_idx,conv2=False,forward=forward,backward=backward)
     mbox_layers = CreateMultiBoxHead_share_2x(net, data_layer='data', from_layers=roll_layers,
             use_batchnorm=use_batchnorm, min_sizes=min_sizes, max_sizes=max_sizes,
             aspect_ratios=aspect_ratios, normalizations=normalizations2,
