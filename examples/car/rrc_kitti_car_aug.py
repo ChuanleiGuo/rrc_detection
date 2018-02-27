@@ -51,7 +51,7 @@ def AddExtraLayers(net, use_batchnorm=True):
 
 rolling_time = 4
 branch_num = 4
-model_name = "kitti_car_exp4_aug_finetune"
+model_name = "kitti_car_exp4_aug"
 # Set true if you want to start training right after generating all files.
 run_soon = True
 # Set true if you want to load from most recently saved snapshot.
