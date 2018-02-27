@@ -155,7 +155,7 @@ void AnnotatedDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
       }
     }
 
-    AnnotatedDatum sampled_datum = NULL;
+    AnnotatedDatum* sampled_datum = NULL;
     bool has_sampled = false;
     if (batch_samplers_.size() > 0) {
       // Generate sampled bboxes from expand_datum.
@@ -183,12 +183,12 @@ void AnnotatedDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
     if (this->output_labels_) {
       if (has_anno_type_) {
         // Make sure all data have same annotation type.
-        CHECK(sampled_datum.has_type()) << "Some datum misses AnnotationType.";
-        CHECK_EQ(anno_type_, sampled_datum.type()) <<
+        CHECK(sampled_datum->has_type()) << "Some datum misses AnnotationType.";
+        CHECK_EQ(anno_type_, sampled_datum->type()) <<
             "Different AnnotationType.";
         // Transform datum and annotation_group at the same time
         transformed_anno_vec.clear();
-        this->data_transformer_->Transform(sampled_datum,
+        this->data_transformer_->Transform(*sampled_datum,
                                            &(this->transformed_data_),
                                            &transformed_anno_vec);
         if (anno_type_ == AnnotatedDatum_AnnotationType_BBOX) {
@@ -201,14 +201,14 @@ void AnnotatedDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
         }
         all_anno[item_id] = transformed_anno_vec;
       } else {
-        this->data_transformer_->Transform(sampled_datum.datum(),
+        this->data_transformer_->Transform(sampled_datum->datum(),
                                            &(this->transformed_data_));
         // Otherwise, store the label from datum.
-        CHECK(sampled_datum.datum().has_label()) << "Cannot find any label.";
-        top_label[item_id] = sampled_datum.datum().label();
+        CHECK(sampled_datum->datum().has_label()) << "Cannot find any label.";
+        top_label[item_id] = sampled_datum->datum().label();
       }
     } else {
-      this->data_transformer_->Transform(sampled_datum.datum(),
+      this->data_transformer_->Transform(sampled_datum->datum(),
                                          &(this->transformed_data_));
     }
     // clear memory
