@@ -107,7 +107,7 @@ job_file = "{}/{}.sh".format(job_dir, model_name)
 name_size_file = "data/KITTI-car/testing_name_size.txt"
 # The pretrained model. We use the Fully convolutional reduced (atrous) VGGNet.
 # pretrain_model = "models/VGGNet/VGG_ILSVRC_16_layers_fc_reduced.caffemodel"
-pretrain_model = "models/VGGNet/RRC_2560x768_kitti_car_exp4_aug_finetune/trained_model.caffemodel"
+pretrain_model = "models/VGGNet/KITTI/pretrained.caffemodel"
 # Stores LabelMapItem.
 label_map_file = "data/KITTI-car/labelmap_voc.prototxt"
 # L2 normalize conv4_3.
@@ -249,23 +249,23 @@ train_transform_param = {
                         P.Resize.LANCZOS4,
                         ],
                 },
-        'distort_param': {
-                'brightness_prob': 0.5,
-                'brightness_delta': 32,
-                'contrast_prob': 0.5,
-                'contrast_lower': 0.5,
-                'contrast_upper': 1.5,
-                'hue_prob': 0.5,
-                'hue_delta': 18,
-                'saturation_prob': 0.5,
-                'saturation_lower': 0.5,
-                'saturation_upper': 1.5,
-                'random_order_prob': 0.0,
-                },
-        'expand_param': {
-                'prob': 0.5,
-                'max_expand_ratio': 4.0,
-                },
+        # 'distort_param': {
+        #         'brightness_prob': 0.5,
+        #         'brightness_delta': 32,
+        #         'contrast_prob': 0.5,
+        #         'contrast_lower': 0.5,
+        #         'contrast_upper': 1.5,
+        #         'hue_prob': 0.5,
+        #         'hue_delta': 18,
+        #         'saturation_prob': 0.5,
+        #         'saturation_lower': 0.5,
+        #         'saturation_upper': 1.5,
+        #         'random_order_prob': 0.0,
+        #         },
+        # 'expand_param': {
+        #         'prob': 0.5,
+        #         'max_expand_ratio': 4.0,
+        #         },
         'emit_constraint': {
             'emit_type': caffe_pb2.EmitConstraint.CENTER,
             }
