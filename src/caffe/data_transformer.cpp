@@ -512,7 +512,7 @@ void DataTransformer<Dtype>::ExpandImage(const AnnotatedDatum& anno_datum,
   // Transform the annotation according to crop_bbox.
   const bool do_resize = false;
   const bool do_mirror = false;
-  TransformAnnotation(anno_datum, do_resize, expand_bbox, do_mirror,
+  TransformAnnotation(anno_datum, expand_bbox, do_mirror,
                       expanded_anno_datum->mutable_annotation_group());
 }
 
