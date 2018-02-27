@@ -851,7 +851,7 @@ def AddBN(net,f_name):
     net[sc_name]=L.Scale(net[f_name], scale_param = scale_param, in_place=True)
 
 
-def CreateRollingStruct(net,from_layers_basename=[],num_outputs=[],odd=[],rolling_rate=0.25,roll_idx=1,conv2=False,Normalize = True, forward=True, backward=True):
+def CreateRollingStruct(net,from_layers_basename=[],num_outputs=[],odd=[],rolling_rate=0.25,roll_idx=1,conv2=False,Normalize = True):
 
     roll_layers=[]
     factor = 2
@@ -867,7 +867,7 @@ def CreateRollingStruct(net,from_layers_basename=[],num_outputs=[],odd=[],rollin
         f_layers = []
         num_out = int(num_outputs[i]*rolling_rate)
 #pooling
-        if forward and i > 0:
+        if i > 0:
             f_layer=from_layers[i-1]
             o_layer='%s_r%d'%(from_layers_basename[i-1],roll_idx)
             kwargs = {
@@ -884,7 +884,7 @@ def CreateRollingStruct(net,from_layers_basename=[],num_outputs=[],odd=[],rollin
 
         f_layers.append(net[from_layers[i]])
 
-        if backward and i < len(from_layers)-1:
+        if i < len(from_layers)-1:
             f_layer=from_layers[i+1]
             o_layer='%s_l%d'%(from_layers_basename[i+1],roll_idx)
             kwargs = {
