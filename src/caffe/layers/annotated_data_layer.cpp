@@ -105,6 +105,10 @@ void AnnotatedDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
   // Reshape according to the first anno_datum of each batch
   // on single input batches allows for inputs of varying dimension.
   const int batch_size = this->layer_param_.data_param().batch_size();
+  const AnnotatedDataParameter& anno_data_param =
+      this->layer_param_.annotated_data_param();
+  const TransformationParameter& transform_param =
+    this->layer_param_.transform_param();
   AnnotatedDatum& anno_datum = *(reader_.full().peek());
   // Use data_transformer to infer the expected blob shape from anno_datum.
   vector<int> top_shape =
@@ -130,22 +134,48 @@ void AnnotatedDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
     AnnotatedDatum& anno_datum = *(reader_.full().pop("Waiting for data"));
     read_time += timer.MicroSeconds();
     timer.Start();
-    AnnotatedDatum sampled_datum;
-    if (batch_samplers_.size() > 0) {
-      // Generate sampled bboxes from anno_datum.
-      vector<NormalizedBBox> sampled_bboxes;
-      GenerateBatchSamples(anno_datum, batch_samplers_, &sampled_bboxes);
-      if (sampled_bboxes.size() > 0) {
-        // Randomly pick a sampled bbox and crop the anno_datum.
-        int rand_idx = caffe_rng_rand() % sampled_bboxes.size();
-        this->data_transformer_->CropImage(anno_datum, sampled_bboxes[rand_idx],
-                                           &sampled_datum);
+    AnnotatedDatum distort_datum;
+    AnnotatedDatum* expand_datum = NULL;
+    if (transform_param.has_distort_param()) {
+      distort_datum.CopyFrom(anno_datum);
+      this->data_transformer_->DistortImage(anno_datum.datum(),
+                                            distort_datum.mutable_datum());
+      if (transform_param.has_expand_param()) {
+        expand_datum = new AnnotatedDatum();
+        this->data_transformer_->ExpandImage(distort_datum, expand_datum);
       } else {
-        sampled_datum.CopyFrom(anno_datum);
+        expand_datum = &distort_datum;
       }
     } else {
-      sampled_datum.CopyFrom(anno_datum);
+      if (transform_param.has_expand_param()) {
+        expand_datum = new AnnotatedDatum();
+        this->data_transformer_->ExpandImage(anno_datum, expand_datum);
+      } else {
+        expand_datum = &anno_datum;
+      }
     }
+
+    AnnotatedDatum sampled_datum = NULL;
+    bool has_sampled = false;
+    if (batch_samplers_.size() > 0) {
+      // Generate sampled bboxes from expand_datum.
+      vector<NormalizedBBox> sampled_bboxes;
+      GenerateBatchSamples(*expand_datum, batch_samplers_, &sampled_bboxes);
+      if (sampled_bboxes.size() > 0) {
+        // Randomly pick a sampled bbox and crop the expand_datum.
+        int rand_idx = caffe_rng_rand() % sampled_bboxes.size();
+        sampled_datum = new AnnotatedDatum();
+        this->data_transformer_->CropImage(*expand_datum, sampled_bboxes[rand_idx],
+                                           &sampled_datum);
+        has_sampled = true;
+      } else {
+        sampled_datum = expand_datum;
+      }
+    } else {
+      sampled_datum = expand_datum;
+    }
+    CHECK(sampled_datum != NULL);
+    timer.Start();
     // Apply data transformations (mirror, scale, crop...)
     int offset = batch->data_.offset(item_id);
     this->transformed_data_.set_cpu_data(top_data + offset);
@@ -180,6 +210,13 @@ void AnnotatedDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
     } else {
       this->data_transformer_->Transform(sampled_datum.datum(),
                                          &(this->transformed_data_));
+    }
+    // clear memory
+    if (has_sampled) {
+      delete sampled_datum;
+    }
+    if (transform_param.has_expand_param()) {
+      delete expand_datum;
     }
     trans_time += timer.MicroSeconds();
 
