@@ -51,7 +51,7 @@ def AddExtraLayers(net, use_batchnorm=True):
 
 rolling_time = 4
 branch_num = 4
-model_name = "kitti_car_exp4_adam_finetune"
+model_name = "kitti_car_exp4_aug_finetune"
 # Set true if you want to start training right after generating all files.
 run_soon = True
 # Set true if you want to load from most recently saved snapshot.
@@ -110,7 +110,8 @@ job_file = "{}/{}.sh".format(job_dir, model_name)
 # Stores the test image names and sizes. Created by data/KITTI/create_list.sh
 name_size_file = "data/KITTI-car/testing_name_size.txt"
 # The pretrained model. We use the Fully convolutional reduced (atrous) VGGNet.
-pretrain_model = "models/VGGNet/VGG_ILSVRC_16_layers_fc_reduced.caffemodel"
+# pretrain_model = "models/VGGNet/VGG_ILSVRC_16_layers_fc_reduced.caffemodel"
+pretrain_model = "models/VGGNet/RRC_2560x768_kitti_car_exp4_aug_finetune/trained_model.caffemodel"
 # Stores LabelMapItem.
 label_map_file = "data/KITTI-car/labelmap_voc.prototxt"
 # L2 normalize conv4_3.
