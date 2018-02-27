@@ -249,6 +249,23 @@ train_transform_param = {
                         P.Resize.LANCZOS4,
                         ],
                 },
+        'distort_param': {
+                'brightness_prob': 0.5,
+                'brightness_delta': 32,
+                'contrast_prob': 0.5,
+                'contrast_lower': 0.5,
+                'contrast_upper': 1.5,
+                'hue_prob': 0.5,
+                'hue_delta': 18,
+                'saturation_prob': 0.5,
+                'saturation_lower': 0.5,
+                'saturation_upper': 1.5,
+                'random_order_prob': 0.0,
+                },
+        'expand_param': {
+                'prob': 0.5,
+                'max_expand_ratio': 4.0,
+                },
         'emit_constraint': {
             'emit_type': caffe_pb2.EmitConstraint.CENTER,
             }
@@ -510,32 +527,32 @@ for roll_idx in range(1,rolling_time+1):
                                         roll_idx=roll_idx,conv2=False)
 
 #==============================================================================
-    mbox_layers = CreateMultiBoxHead_share_2x(net, data_layer='data', from_layers=roll_layers,
-                use_batchnorm=use_batchnorm, min_sizes=min_sizes, max_sizes=max_sizes,
-                aspect_ratios=aspect_ratios, normalizations=normalizations2,
-                num_classes=num_classes, share_location=share_location, flip=flip, clip=clip,
-                prior_variance=prior_variance, kernel_size=3, pad=1,layers_names=mbox_source_layers, conf_postfix='%d'%(rolling_time+1),
-                loc_postfix='%d'%(rolling_time+1),branch_num = branch_num)
-    conf_name = "mbox_conf%d"%(rolling_time+1)
-    if multibox_loss_param["conf_loss_type"] == P.MultiBoxLoss.SOFTMAX:
-        reshape_name = "{}_reshape".format(conf_name)
-        net[reshape_name] = L.Reshape(net[conf_name], shape=dict(dim=[0, -1, num_classes]))
-        softmax_name = "{}_softmax".format(conf_name)
-        net[softmax_name] = L.Softmax(net[reshape_name], axis=2)
-        flatten_name = "{}_flatten".format(conf_name)
-        net[flatten_name] = L.Flatten(net[softmax_name], axis=1)
-        mbox_layers[1] = net[flatten_name]
-    elif multibox_loss_param["conf_loss_type"] == P.MultiBoxLoss.LOGISTIC:
-        sigmoid_name = "{}_sigmoid".format(conf_name)
-        net[sigmoid_name] = L.Sigmoid(net[conf_name])
-        mbox_layers[1] = net[sigmoid_name]
+mbox_layers = CreateMultiBoxHead_share_2x(net, data_layer='data', from_layers=roll_layers,
+            use_batchnorm=use_batchnorm, min_sizes=min_sizes, max_sizes=max_sizes,
+            aspect_ratios=aspect_ratios, normalizations=normalizations2,
+            num_classes=num_classes, share_location=share_location, flip=flip, clip=clip,
+            prior_variance=prior_variance, kernel_size=3, pad=1,layers_names=mbox_source_layers, conf_postfix='%d'%(rolling_time+1),
+            loc_postfix='%d'%(rolling_time+1),branch_num = branch_num)
+conf_name = "mbox_conf%d"%(rolling_time+1)
+if multibox_loss_param["conf_loss_type"] == P.MultiBoxLoss.SOFTMAX:
+  reshape_name = "{}_reshape".format(conf_name)
+  net[reshape_name] = L.Reshape(net[conf_name], shape=dict(dim=[0, -1, num_classes]))
+  softmax_name = "{}_softmax".format(conf_name)
+  net[softmax_name] = L.Softmax(net[reshape_name], axis=2)
+  flatten_name = "{}_flatten".format(conf_name)
+  net[flatten_name] = L.Flatten(net[softmax_name], axis=1)
+  mbox_layers[1] = net[flatten_name]
+elif multibox_loss_param["conf_loss_type"] == P.MultiBoxLoss.LOGISTIC:
+  sigmoid_name = "{}_sigmoid".format(conf_name)
+  net[sigmoid_name] = L.Sigmoid(net[conf_name])
+  mbox_layers[1] = net[sigmoid_name]
 
-    net.detection_out = L.DetectionOutput(*mbox_layers,
-        detection_output_param=det_out_param,
-        include=dict(phase=caffe_pb2.Phase.Value('TEST')))
-    net.detection_eval = L.DetectionEvaluate(net.detection_out, net.label,
-        detection_evaluate_param=det_eval_param,
-        include=dict(phase=caffe_pb2.Phase.Value('TEST')))
+net.detection_out = L.DetectionOutput(*mbox_layers,
+    detection_output_param=det_out_param,
+    include=dict(phase=caffe_pb2.Phase.Value('TEST')))
+net.detection_eval = L.DetectionEvaluate(net.detection_out, net.label,
+    detection_evaluate_param=det_eval_param,
+    include=dict(phase=caffe_pb2.Phase.Value('TEST')))
 with open(test_net_file, 'w') as f:
     print('name: "{}_test"'.format(model_name), file=f)
     print(net.to_proto(), file=f)
