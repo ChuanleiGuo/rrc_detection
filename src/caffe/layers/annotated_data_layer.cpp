@@ -166,7 +166,7 @@ void AnnotatedDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
         int rand_idx = caffe_rng_rand() % sampled_bboxes.size();
         sampled_datum = new AnnotatedDatum();
         this->data_transformer_->CropImage(*expand_datum, sampled_bboxes[rand_idx],
-                                           &sampled_datum);
+                                           sampled_datum);
         has_sampled = true;
       } else {
         sampled_datum = expand_datum;
