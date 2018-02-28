@@ -7,7 +7,8 @@ from PIL import ImageDraw
 # Make sure that the work directory is caffe_root
 caffe_root = './'
 # modify img_dir to your path of testing images of kitti
-img_dir = 'data/KITTI/testing/image_2/'
+# img_dir = 'data/KITTI/testing/image_2/'i
+img_dir = 'data/KITTI/training/image_2/'
 import os
 os.chdir(caffe_root)
 import sys
@@ -17,14 +18,15 @@ from caffe.proto import caffe_pb2
 
 import caffe
 from _ensemble import *
-caffe.set_device(0)
+caffe.set_device(1)
 caffe.set_mode_gpu()
-num_img =7518
-model_def = 'models/VGGNet/KITTI/RRC_2560x768_kitti_car/deploy.prototxt'
-model_weights = 'models/VGGNet/KITTI/RRC_2560x768_kitti_car/VGG_KITTI_RRC_2560x768_kitti_car_iter_60000.caffemodel'
+# num_img =7518
+num_img = 7481
+model_def = 'models/VGGNet/KITTI/RRC_2560x768_kitti_car_exp4_aug/deploy.prototxt'
+model_weights = 'models/VGGNet/KITTI/RRC_2560x768_kitti_car_exp4_aug/VGG_KITTI_RRC_2560x768_kitti_car_exp4_aug_iter_5000.caffemodel'
 voc_labelmap_file = caffe_root+'data/KITTI-car/labelmap_voc.prototxt'
-save_dir = 'models/VGGNet/KITTI/RRC_2560x768_kitti_car/result-test/'
-txt_dir = 'models/VGGNet/KITTI/RRC_2560x768_kitti_car/result-test/'
+save_dir = 'models/VGGNet/KITTI/RRC_2560x768_kitti_car_exp4_aug/result-test/'
+txt_dir = 'models/VGGNet/KITTI/RRC_2560x768_kitti_car_exp4_aug/result-test/'
 
 detection_out_num = 3
 if not(os.path.exists(txt_dir)):
@@ -154,8 +156,8 @@ for img_idx in range(0,num_img):
     top_conf = det_results[idxs,4]
     top_label = det_results[idxs,5]
     result_file = open(save_dir+"%06d.txt"%(img_idx),'w')
-    img = Image.open(img_dir + "%06d.png"%(img_idx))
-    draw = ImageDraw.Draw(img)
+    # img = Image.open(img_dir + "%06d.png"%(img_idx))
+    # draw = ImageDraw.Draw(img)
     for i in xrange(top_conf.shape[0]):
         xmin = top_xmin[i]
         ymin = top_ymin[i]
@@ -169,11 +171,11 @@ for img_idx in range(0,num_img):
            continue
         score = top_conf[i]
         label = 'Car'
-        if score > 0.1:
-            draw.line(((xmin,ymin),(xmin,ymax),(xmax,ymax),(xmax,ymin),(xmin,ymin)),fill=(0,255,0))
-            draw.text((xmin,ymin),'%.2f'%(score),fill=(255,255,255))
-        elif score > 0.02:
-            draw.line(((xmin,ymin),(xmin,ymax),(xmax,ymax),(xmax,ymin),(xmin,ymin)),fill=(255,0,255))
-            draw.text((xmin,ymin),'%.2f'%(score),fill=(255,255,255))
+        # if score > 0.1:
+        #     draw.line(((xmin,ymin),(xmin,ymax),(xmax,ymax),(xmax,ymin),(xmin,ymin)),fill=(0,255,0))
+        #     draw.text((xmin,ymin),'%.2f'%(score),fill=(255,255,255))
+        # elif score > 0.02:
+        #     draw.line(((xmin,ymin),(xmin,ymax),(xmax,ymax),(xmax,ymin),(xmin,ymin)),fill=(255,0,255))
+        #     draw.text((xmin,ymin),'%.2f'%(score),fill=(255,255,255))
         result_file.write("%s -1 -1 -10 %.3f %.3f %.3f %.3f -1 -1 -1 -1000 -1000 -1000 -10 %.8f\n"%(label,xmin,ymin,xmax,ymax,score))
-        img.save(save_dir+"%06d.png"%(img_idx))
+        # img.save(save_dir+"%06d.png"%(img_idx))
