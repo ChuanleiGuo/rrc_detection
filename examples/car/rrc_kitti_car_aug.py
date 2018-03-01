@@ -354,6 +354,7 @@ solver_param = {
     'device_id': device_id,
     'debug_info': False,
     'snapshot_after_train': True,
+    "show_per_class_result": True,
     # Test parameters
     'test_iter': [test_iter],
     'test_interval': 1000000,
