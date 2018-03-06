@@ -286,7 +286,7 @@ focal_loss_param = { #set the alpha and gamma, default is alpha=0.25, gamma=2.0
     "gamma": 2.0
 }
 
-multibox_focal_loss_param = {
+multibox_loss_param = {
     'loc_loss_type': P.MultiBoxLoss.SMOOTH_L1,
     'conf_loss_type': P.MultiBoxLoss.SOFTMAX,
     'loc_weight': loc_weight,
