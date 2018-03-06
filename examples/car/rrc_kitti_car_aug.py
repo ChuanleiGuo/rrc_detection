@@ -74,7 +74,7 @@ resize = "{}x{}".format(resize_width, resize_height)
 
 # If true, use batch norm for all newly added layers.
 # Currently only the non batch norm version has been tested.
-learning_rate = 0.00005
+learning_rate = 0.0005
 use_batchnorm = False
 # Use different initial learning rate.
 if use_batchnorm:
@@ -349,7 +349,7 @@ solver_param = {
     'gamma': 0.1,
     'momentum': 0.9,
     'iter_size': iter_size,
-    'max_iter': 60000,
+    'max_iter': 80000,
     'snapshot': 2500,
     'display': 10,
     'average_loss': 10,
