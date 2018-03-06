@@ -111,7 +111,7 @@ void MultiBoxFocalLossLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& botto
     layer_param.mutable_loss_param()->set_normalization(
         LossParameter_NormalizationMode_NONE);
     FocalLossParameter* faocal_param = layer_param.mutable_focal_loss_param();
-    softmax_param->set_axis(1);
+    faocal_param->set_axis(1);
     faocal_param->set_alpha(alpha_);
     faocal_param->set_gamma(gamma_);
     // Fake reshape.
