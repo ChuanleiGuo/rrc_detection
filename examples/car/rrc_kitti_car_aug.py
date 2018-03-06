@@ -51,7 +51,7 @@ def AddExtraLayers(net, use_batchnorm=True):
 
 rolling_time = 4
 branch_num = 4
-model_name = "kitti_car_exp4_aug"
+model_name = "kitti_car_exp5_focal"
 # Set true if you want to start training right after generating all files.
 run_soon = True
 # Set true if you want to load from most recently saved snapshot.
@@ -106,8 +106,8 @@ job_file = "{}/{}.sh".format(job_dir, model_name)
 # Stores the test image names and sizes. Created by data/KITTI/create_list.sh
 name_size_file = "data/KITTI-car/testing_name_size.txt"
 # The pretrained model. We use the Fully convolutional reduced (atrous) VGGNet.
-# pretrain_model = "models/VGGNet/VGG_ILSVRC_16_layers_fc_reduced.caffemodel"
-pretrain_model = "models/VGGNet/KITTI/pretrained.caffemodel"
+pretrain_model = "models/VGGNet/VGG_ILSVRC_16_layers_fc_reduced.caffemodel"
+# pretrain_model = "models/VGGNet/KITTI/pretrained.caffemodel"
 # Stores LabelMapItem.
 label_map_file = "data/KITTI-car/labelmap_voc.prototxt"
 # L2 normalize conv4_3.
@@ -281,8 +281,12 @@ test_transform_param = {
                 },
         }
 
+focal_loss_param = { #set the alpha and gamma, default is alpha=0.25, gamma=2.0
+    "alpha": 0.25,
+    "gamma": 2.0
+}
 
-multibox_loss_param = {
+multibox_focal_loss_param = {
     'loc_loss_type': P.MultiBoxLoss.SMOOTH_L1,
     'conf_loss_type': P.MultiBoxLoss.SOFTMAX,
     'loc_weight': loc_weight,
@@ -293,7 +297,7 @@ multibox_loss_param = {
     'use_prior_for_matching': True,
     'background_label_id': background_label_id,
     'use_difficult_gt': train_on_diff_gt,
-    'do_neg_mining': True,
+    'do_neg_mining': False,
     'neg_pos_ratio': neg_pos_ratio,
     'neg_overlap': 0.5,
     'code_type': code_type,
@@ -424,11 +428,11 @@ mbox_layers = CreateMultiBoxHead_share_2x(net, data_layer='data', from_layers=mb
         num_classes=num_classes, share_location=share_location, flip=flip, clip=clip,
         prior_variance=prior_variance, kernel_size=3, pad=1,layers_names=mbox_source_layers,branch_num=branch_num)
 
-# Create the MultiBoxLossLayer.
-name = "mbox_loss"
+# Create the MultiBoxFocalLossLayer.
+name = "mbox_focal_loss"
 mbox_layers.append(net.label)
-net[name] = L.MultiBoxLoss(*mbox_layers, multibox_loss_param=multibox_loss_param,
-        loss_param=loss_param, include=dict(phase=caffe_pb2.Phase.Value('TRAIN')),
+net[name] = L.MultiBoxFocalLoss(*mbox_layers, multibox_loss_param=multibox_loss_param,
+        loss_param=loss_param, focal_loss_param=focal_loss_param, include=dict(phase=caffe_pb2.Phase.Value('TRAIN')),
         propagate_down=[True, True, False, False])
 
 for roll_idx in range(1,rolling_time+1):
@@ -443,11 +447,11 @@ for roll_idx in range(1,rolling_time+1):
             prior_variance=prior_variance, kernel_size=3, pad=1,layers_names=mbox_source_layers,
             conf_postfix='%d'%(roll_idx+1), loc_postfix='%d'%(roll_idx+1),branch_num=branch_num)
 
-    # Create the MultiBoxLossLayer.
-    name = "mbox_loss%d"%(roll_idx+1)
+    # Create the MultiBoxFocalLossLayer.
+    name = "mbox_focal_loss%d"%(roll_idx+1)
     mbox_layers.append(net.label)
-    net[name] = L.MultiBoxLoss(*mbox_layers, multibox_loss_param=multibox_loss_param,
-            loss_param=loss_param, include=dict(phase=caffe_pb2.Phase.Value('TRAIN')),
+    net[name] = L.MultiBoxFocalLoss(*mbox_layers, multibox_loss_param=multibox_loss_param,
+            loss_param=loss_param, focal_loss_param=focal_loss_param, include=dict(phase=caffe_pb2.Phase.Value('TRAIN')),
             propagate_down=[True, True, False, False])
 #==============================================================================
 
