@@ -343,7 +343,7 @@ test_iter = num_test_image / test_batch_size
 solver_param = {
     # Train parameters
     'base_lr': learning_rate,
-    'weight_decay': 0.00005,
+    'weight_decay': 0.0005,
     'lr_policy': "step",
     'stepsize': 30000,
     'gamma': 0.1,
